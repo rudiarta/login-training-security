@@ -1,14 +1,25 @@
 package com.example.logintrainingsecurity.resource;
 
 
+import com.example.logintrainingsecurity.model.CustomUserDetails;
+import com.example.logintrainingsecurity.model.Users;
+import com.example.logintrainingsecurity.repository.UsersRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RequestMapping("/rest/hello")
 @RestController
 public class HelloResource {
+    @Autowired
+    private UsersRepository usersRepository;
 
     @GetMapping("/all")
     public String hello() {
@@ -18,7 +29,17 @@ public class HelloResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/secured/all")
     public String securedHello() {
-        return "Secured Hello";
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserName = "";
+        
+        if (!(authentication instanceof AnonymousAuthenticationToken)) {
+            currentUserName = authentication.getName();
+        }
+
+        Optional<Users> s = usersRepository.findByName(currentUserName);
+        Users w = s.map(CustomUserDetails::new).get();
+
+        return "Secured Hello "+ w.getLastName();
     }
 
     @GetMapping("/secured/alternate")
