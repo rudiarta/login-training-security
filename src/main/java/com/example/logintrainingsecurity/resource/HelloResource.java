@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collection;
 import java.util.Optional;
 
 @RequestMapping("/rest/hello")
@@ -31,15 +33,17 @@ public class HelloResource {
     public String securedHello() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUserName = "";
+        Collection<? extends GrantedAuthority> role = null;
         
         if (!(authentication instanceof AnonymousAuthenticationToken)) {
             currentUserName = authentication.getName();
+            role = authentication.getAuthorities();
         }
 
         Optional<Users> s = usersRepository.findByName(currentUserName);
         Users w = s.map(CustomUserDetails::new).get();
 
-        return "Secured Hello "+ w.getLastName();
+        return "Secured Hello "+ w.getLastName() +" "+role.toArray()[0];
     }
 
     @GetMapping("/secured/alternate")
